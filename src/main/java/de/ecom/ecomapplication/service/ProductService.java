@@ -8,7 +8,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -55,6 +57,21 @@ public class ProductService {
                             productRepository.save(existingProduct);
                             return mapToResponse(existingProduct);
                         });
+    }
+
+    public List<ProductResponse> getAllProduct() {
+        return productRepository.findByActiveTrue().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public Boolean deleteProduct(Long id) {
+        return productRepository.findById(id)
+                .map(product -> {
+                    product.setActive(false);
+                    productRepository.save(product);
+                    return true;
+                }).orElse(false);
     }
 }
 
