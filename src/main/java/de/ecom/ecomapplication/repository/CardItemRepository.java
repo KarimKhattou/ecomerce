@@ -11,4 +11,6 @@ import java.util.Optional;
 @Repository
 public interface CardItemRepository extends JpaRepository<CardItem, Long> {
     CardItem findByUserAndProduct(User user, Product product);
+
+    void deleteByUserAndProduct(User user, Product product);
 }
