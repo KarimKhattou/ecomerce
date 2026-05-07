@@ -23,21 +23,21 @@ public class CartService {
     private final UserRepository userRepository;
     private final CardItemRepository cardItemRepository;
 
-    public boolean addToCart(String userId, CartItemRequest cartRequest) {
+    public ResponseEntity<String> addToCart(String userId, CartItemRequest cartRequest) {
         // fetch the product
         Optional<Product> productOpt = productRepository.findById(cartRequest.getProductId());
         if (productOpt.isEmpty())
-            return false;
+            return ResponseEntity.badRequest().body("P");
         Product product = productOpt.get();
 
         // check the quantity
         if (product.getQuantity() < cartRequest.getQuantity())
-            return false;
+            return ResponseEntity.badRequest().body("Q");;
 
         // fetch the user
         Optional<User> userOpt = userRepository.findById(Long.valueOf(userId));
         if (userOpt.isEmpty())
-            return false;
+            return ResponseEntity.badRequest().body("U");;
         User user = userOpt.get();
 
         CardItem existingCardItem = cardItemRepository.findByUserAndProduct(user, product);
@@ -56,7 +56,7 @@ public class CartService {
             cardItemRepository.save(cardItem);
         }
 
-        return true;
+        return ResponseEntity.ok().body("Item added successfully!");
     }
 
     public boolean removeItemFromCart(String userId, String productId) {
