@@ -27,22 +27,26 @@ public class CartService {
     private final UserRepository userRepository;
     private final CardItemRepository cardItemRepository;
 
-    public List<CartItemResponse> getAllUser() {
-        return cardItemRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<CartItemResponse> getCarts(String userId) {
+        List<CardItem> card = userRepository.findById(Long.valueOf(userId))
+                .map(cardItemRepository::findByUser)
+                .orElseGet(List::of);
+        return mapToResponse(card);
     }
 
-    private CartItemResponse mapToResponse(CardItem cardItem) {
-        CartItemResponse cardResponse = new CartItemResponse();
-        cardResponse.setUser(cardItem.getUser());
-        cardResponse.setProduct(cardItem.getProduct());
-        cardResponse.setQuantity(cardItem.getQuantity());
-        cardResponse.setPrice(cardItem.getPrice());
-        cardResponse.setCreatedAt(cardItem.getCreatedAt());
-        cardResponse.setUpdatedAt(cardItem.getUpdatedAt());
-
-        return cardResponse;
+    private List<CartItemResponse> mapToResponse(List<CardItem> card) {
+        return card.stream()
+                .map(cardItem -> {
+                    CartItemResponse response = new CartItemResponse();
+                    response.setUser(cardItem.getUser());
+                    response.setProduct(cardItem.getProduct());
+                    response.setQuantity(cardItem.getQuantity());
+                    response.setPrice(cardItem.getPrice());
+                    response.setCreatedAt(cardItem.getCreatedAt());
+                    response.setUpdatedAt(cardItem.getUpdatedAt());
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
     public ResponseEntity<String> addToCart(String userId, CartItemRequest cartRequest) {

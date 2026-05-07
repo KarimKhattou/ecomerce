@@ -3,6 +3,7 @@ package de.ecom.ecomapplication.controller;
 import de.ecom.ecomapplication.dto.CartItemRequest;
 import de.ecom.ecomapplication.dto.CartItemResponse;
 import de.ecom.ecomapplication.dto.ProductResponse;
+import de.ecom.ecomapplication.model.CardItem;
 import de.ecom.ecomapplication.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.LifecycleState;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.smartcardio.Card;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,8 +23,9 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<List<CartItemResponse>> getAllCarts() {
-        return ResponseEntity.ok(cartService.getAllUser());
+    public ResponseEntity<List<CartItemResponse>> getCarts(
+            @RequestHeader("X-User-ID") String userId) {
+        return ResponseEntity.ok(cartService.getCarts(userId));
     }
 
     @PostMapping
