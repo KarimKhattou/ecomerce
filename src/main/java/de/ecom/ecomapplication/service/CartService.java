@@ -1,6 +1,8 @@
 package de.ecom.ecomapplication.service;
 
 import de.ecom.ecomapplication.dto.CartItemRequest;
+import de.ecom.ecomapplication.dto.CartItemResponse;
+import de.ecom.ecomapplication.dto.ProductResponse;
 import de.ecom.ecomapplication.model.CardItem;
 import de.ecom.ecomapplication.model.Product;
 import de.ecom.ecomapplication.model.User;
@@ -13,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,24 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final CardItemRepository cardItemRepository;
+
+    public List<CartItemResponse> getAllUser() {
+        return cardItemRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private CartItemResponse mapToResponse(CardItem cardItem) {
+        CartItemResponse cardResponse = new CartItemResponse();
+        cardResponse.setUser(cardItem.getUser());
+        cardResponse.setProduct(cardItem.getProduct());
+        cardResponse.setQuantity(cardItem.getQuantity());
+        cardResponse.setPrice(cardItem.getPrice());
+        cardResponse.setCreatedAt(cardItem.getCreatedAt());
+        cardResponse.setUpdatedAt(cardItem.getUpdatedAt());
+
+        return cardResponse;
+    }
 
     public ResponseEntity<String> addToCart(String userId, CartItemRequest cartRequest) {
         // fetch the product
