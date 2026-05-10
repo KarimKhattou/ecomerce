@@ -7,6 +7,7 @@ import de.ecom.ecomapplication.model.Order;
 import de.ecom.ecomapplication.model.OrderItem;
 import de.ecom.ecomapplication.model.OrderStatus;
 import de.ecom.ecomapplication.model.User;
+import de.ecom.ecomapplication.repository.OrderItemRepository;
 import de.ecom.ecomapplication.repository.OrderRepository;
 import de.ecom.ecomapplication.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class OrderService {
     private final CartService cartService;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public Optional<OrderResponse> createOrder(String userId) {
         // Validate User
@@ -38,7 +40,6 @@ public class OrderService {
         }
 
         // Calculate Total price
-        BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal totalPriceValid = cartItemsResponse.stream()
                 .map(item -> item.getPrice()
                         .multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -57,8 +58,11 @@ public class OrderService {
                         item.getPrice(),
                         order
                 )).toList();
+
         order.setOrderItems(orderItems);
         Order savedOrder = orderRepository.save(order);
+        orderItemRepository.saveAll(orderItems);
+
 
         // Clear the cart
         cartService.clearCart(userId);
