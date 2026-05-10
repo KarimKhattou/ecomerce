@@ -2,11 +2,10 @@ package de.ecom.ecomapplication.service;
 
 import de.ecom.ecomapplication.dto.CartItemRequest;
 import de.ecom.ecomapplication.dto.CartItemResponse;
-import de.ecom.ecomapplication.dto.ProductResponse;
-import de.ecom.ecomapplication.model.CardItem;
+import de.ecom.ecomapplication.model.CartItem;
 import de.ecom.ecomapplication.model.Product;
 import de.ecom.ecomapplication.model.User;
-import de.ecom.ecomapplication.repository.CardItemRepository;
+import de.ecom.ecomapplication.repository.CartItemRepository;
 import de.ecom.ecomapplication.repository.ProductRepository;
 import de.ecom.ecomapplication.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -25,25 +24,25 @@ import java.util.stream.Collectors;
 public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final CardItemRepository cardItemRepository;
+    private final CartItemRepository cartItemRepository;
 
-    public List<CartItemResponse> getCarts(String userId) {
-        List<CardItem> card = userRepository.findById(Long.valueOf(userId))
-                .map(cardItemRepository::findByUser)
+    public List<CartItemResponse> getCarts(Long userId) {
+        List<CartItem> card = userRepository.findById(userId)
+                .map(cartItemRepository::findByUser)
                 .orElseGet(List::of);
         return mapToResponse(card);
     }
 
-    private List<CartItemResponse> mapToResponse(List<CardItem> card) {
+    private List<CartItemResponse> mapToResponse(List<CartItem> card) {
         return card.stream()
-                .map(cardItem -> {
+                .map(cartItem -> {
                     CartItemResponse response = new CartItemResponse();
-                    response.setUser(cardItem.getUser());
-                    response.setProduct(cardItem.getProduct());
-                    response.setQuantity(cardItem.getQuantity());
-                    response.setPrice(cardItem.getPrice());
-                    response.setCreatedAt(cardItem.getCreatedAt());
-                    response.setUpdatedAt(cardItem.getUpdatedAt());
+                    response.setUser(cartItem.getUser());
+                    response.setProduct(cartItem.getProduct());
+                    response.setQuantity(cartItem.getQuantity());
+                    response.setPrice(cartItem.getPrice());
+                    response.setCreatedAt(cartItem.getCreatedAt());
+                    response.setUpdatedAt(cartItem.getUpdatedAt());
                     return response;
                 })
                 .collect(Collectors.toList());
@@ -66,20 +65,20 @@ public class CartService {
             return ResponseEntity.badRequest().body("U");;
         User user = userOpt.get();
 
-        CardItem existingCardItem = cardItemRepository.findByUserAndProduct(user, product);
-        if (existingCardItem != null) {
+        CartItem existingCartItem = cartItemRepository.findByUserAndProduct(user, product);
+        if (existingCartItem != null) {
             // update the quantity
-            existingCardItem.setQuantity(existingCardItem.getQuantity() + cartRequest.getQuantity());
-            existingCardItem.setPrice(product.getPrice().multiply(BigDecimal.valueOf(cartRequest.getQuantity())));
-            cardItemRepository.save(existingCardItem);
+            existingCartItem.setQuantity(existingCartItem.getQuantity() + cartRequest.getQuantity());
+            existingCartItem.setPrice(product.getPrice().multiply(BigDecimal.valueOf(cartRequest.getQuantity())));
+            cartItemRepository.save(existingCartItem);
         } else {
             // create a new card item
-            CardItem cardItem = new CardItem();
-            cardItem.setUser(user);
-            cardItem.setProduct(product);
-            cardItem.setQuantity(product.getQuantity());
-            cardItem.setPrice(product.getPrice().multiply(BigDecimal.valueOf(cartRequest.getQuantity())));
-            cardItemRepository.save(cardItem);
+            CartItem cartItem = new CartItem();
+            cartItem.setUser(user);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(product.getQuantity());
+            cartItem.setPrice(product.getPrice().multiply(BigDecimal.valueOf(cartRequest.getQuantity())));
+            cartItemRepository.save(cartItem);
         }
 
         return ResponseEntity.ok().body("Item added successfully!");
@@ -90,9 +89,14 @@ public class CartService {
         Optional<User> userOptional = userRepository.findById(Long.valueOf(userId));
 
         if (productOptional.isPresent() && userOptional.isPresent()) {
-            cardItemRepository.deleteByUserAndProduct(userOptional.get(), productOptional.get());
+            cartItemRepository.deleteByUserAndProduct(userOptional.get(), productOptional.get());
             return true;
         }
         return false;
+    }
+
+    public void clearCart(String userId) {
+        userRepository.findById(Long.valueOf(userId))
+                .ifPresent(cartItemRepository::deleteByUser);
     }
 }
